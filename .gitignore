@@ -1,0 +1,30 @@
+# Python bytecode dosyaları
+*.pyc
+*.pyo
+__pycache__/
+
+# Virtual environment
+env/
+venv/
+.venv/
+
+# Docker dosyaları
+*.log
+docker-compose.override.yml
+.docker/
+
+# IDE ve editör dosyaları
+.vscode/
+.idea/
+*.iml
+
+# Python package manager dosyaları
+*.egg-info/
+*.eggs/
+
+# Linux sistem dosyaları
+*.swp
+*.swo
+
+# Git çalışma alanı dosyaları
+.gitmodules
