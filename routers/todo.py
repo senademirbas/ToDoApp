@@ -44,26 +44,51 @@ def redirect_to_login():
 
 
 @router.get("/todo-page")
-async def render_todo_page(request: Request, db: db_dependency):
+async def render_todo_page(request: Request, db: db_dependency, user: user_dependency):
     try:
         user = get_current_user(request.cookies.get('access_token'))
         if user is None:
             return redirect_to_login()
         todos = db.query(Todo).filter(Todo.owner_id == user.get('id')).all()
-        return templates.TemplateResponse("todo.html", {"request": request, "todos": todos, "user": user})
+        return templates.TemplateResponse("todo.html", {"request": request, "todos": todos or [], "user": user})
+    except:
+        return redirect_to_login()
+
+
+@router.get("/add-todo-page")
+async def render_add_todo_page(request: Request):
+    try:
+        user = get_current_user(request.cookies.get('access_token'))
+        if user is None:
+            return redirect_to_login()
+        
+        return templates.TemplateResponse("add-todo.html", {"request": request, "user": user})
+    except:
+        return redirect_to_login()
+
+
+@router.get("/edit-todo-page/{todo_id}")
+async def render_edit_todo_page(request: Request,todo_id: int, db: db_dependency):
+    try:
+        user = get_current_user(request.cookies.get('access_token'))
+        if user is None:
+            return redirect_to_login()
+        
+        todo = db.query(Todo).filter(Todo.id == todo_id, Todo.owner_id == user.get('id')).first()
+
+        return templates.TemplateResponse("edit-todo.html", {"request": request, "todo": todo, "user": user})
     except:
         return redirect_to_login
-
 
 
 @router.get("/")
 async def read_all(user: user_dependency,db: db_dependency):
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
-    return db.query(Todo).filter(Todo.owner_id == user.get('id').all)
+    return db.query(Todo).filter(Todo.owner_id == user.get('id')).all()
 
 
-@router.get(path= "/todo/{todo_id}", status_code=status.HTTP_200_OK)
+@router.get("/todo/{todo_id}", status_code=status.HTTP_200_OK)
 async def read_by_id(user: user_dependency,db: db_dependency, todo_id: int = Path(gt= 0)):
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
@@ -84,7 +109,7 @@ async def create_todo(user: user_dependency,db: db_dependency, todo_request: Tod
     #fonksiyonları daha güvenli kılmak için todoya da user_dependency ekliyoruz
     db.add(todo)
     db.commit()
-
+    return {"message": "Todo created successfully"}
 
 @router.put(path="/todo/{todo_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def update_todo(user: user_dependency,db: db_dependency, todo_request: TodoRequest, todo_id: int = Path(gt=0)):
