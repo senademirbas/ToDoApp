@@ -41,17 +41,21 @@ def get_db():
 db_dependency = Annotated[Session, Depends(get_db)] 
 
 
-async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
+async def get_current_user(request: Request):  # Accept request instead of token directly
+    token = request.cookies.get('access_token')  # Get token from cookies
+    if token is None:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username = payload.get('sub')
         user_id = payload.get('id')
         user_role = payload.get('role')
         if username is None or user_id is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Username or ID is invalid")
+            raise HTTPException(status_code=401, detail="Username or ID is invalid")
         return {'username': username, 'id': user_id, 'user_role': user_role}
     except JWTError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token is invalid")
+        raise HTTPException(status_code=401, detail="Token is invalid")
 
 
 user_dependency = Annotated[dict, Depends(get_current_user)]

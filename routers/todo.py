@@ -6,7 +6,7 @@ from database import engine, SessionLocal
 from typing import Annotated
 from sqlalchemy.orm import Session
 from fastapi import Depends
-from routers.auth import get_current_user
+from routers.auth import get_current_user, user_dependency
 from fastapi.templating import Jinja2Templates
 
 router = APIRouter(
@@ -34,7 +34,6 @@ def get_db():
 
 
 db_dependency = Annotated[Session, Depends(get_db)] 
-user_dependency = Annotated[dict, Depends(get_current_user)]
 
 
 def redirect_to_login():
@@ -44,11 +43,8 @@ def redirect_to_login():
 
 
 @router.get("/todo-page")
-async def render_todo_page(request: Request, db: db_dependency, user: user_dependency):
+async def render_todo_page(request: Request, db: db_dependency, user: user_dependency):  # Use dependency injection
     try:
-        user = get_current_user(request.cookies.get('access_token'))
-        if user is None:
-            return redirect_to_login()
         todos = db.query(Todo).filter(Todo.owner_id == user.get('id')).all()
         return templates.TemplateResponse("todo.html", {"request": request, "todos": todos or [], "user": user})
     except:
@@ -66,19 +62,21 @@ async def render_add_todo_page(request: Request):
     except:
         return redirect_to_login()
 
-
 @router.get("/edit-todo-page/{todo_id}")
-async def render_edit_todo_page(request: Request,todo_id: int, db: db_dependency):
+async def render_todo_page(request: Request, todo_id: int, db: db_dependency, user: user_dependency): 
     try:
-        user = get_current_user(request.cookies.get('access_token'))
-        if user is None:
+        if user is None:  # user artık doğrudan dependency injection ile alınıyor
             return redirect_to_login()
-        
-        todo = db.query(Todo).filter(Todo.id == todo_id, Todo.owner_id == user.get('id')).first()
 
+        todo = db.query(Todo).filter(Todo.id == todo_id, Todo.owner_id == user.get("id")).first()
+        if not todo:
+            raise HTTPException(status_code=404, detail="Todo not found")
+        
         return templates.TemplateResponse("edit-todo.html", {"request": request, "todo": todo, "user": user})
-    except:
-        return redirect_to_login
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return redirect_to_login()
+
 
 
 @router.get("/")
