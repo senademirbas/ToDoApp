@@ -16,7 +16,6 @@ from langchain_core.messages import HumanMessage, AIMessage
 import markdown
 from bs4 import BeautifulSoup
 
-
 router = APIRouter(
     prefix="/todo",#docsdaki görünüşü değiştirir
     tags=["Todo"]
@@ -60,15 +59,11 @@ async def render_todo_page(request: Request, db: db_dependency, user: user_depen
 
 
 @router.get("/add-todo-page")
-async def render_add_todo_page(request: Request):
-    try:
-        user = get_current_user(request.cookies.get('access_token'))
-        if user is None:
-            return redirect_to_login()
-        
-        return templates.TemplateResponse("add-todo.html", {"request": request, "user": user})
-    except:
+async def render_add_todo_page(request: Request, user: user_dependency):
+    if user is None:
         return redirect_to_login()
+    return templates.TemplateResponse("add-todo.html", {"request": request, "user": user})
+
 
 @router.get("/edit-todo-page/{todo_id}")
 async def render_todo_page(request: Request, todo_id: int, db: db_dependency, user: user_dependency): 
@@ -164,7 +159,7 @@ def markdown_to_text(markdown_string):
 def create_todo_with_gemini(todo_string: str):
     load_dotenv()
     genai.configure(api_key=os.environ.get('GOOGLE_API_KEY'))
-    llm = ChatGoogleGenerativeAI(model="gemini-pro")
+    llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash")
     response = llm.invoke(
         [
             HumanMessage(content="I will provide you a todo item to add my to do list. What i want you to do is to create a longer and more comprehensive description of that todo item, my next message will be my todo"),
