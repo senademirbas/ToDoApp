@@ -3,8 +3,8 @@ from aiohttp import Payload
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
 from pytest import Session
-from database import SessionLocal
-from models import Todo, User
+from ..database import SessionLocal
+from ..models import Todo, User
 from passlib.context import CryptContext
 from fastapi import APIRouter, Depends, status, Path, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
@@ -20,7 +20,7 @@ router = APIRouter(
 )
 
 
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory="app/templates")
 
 
 SECRET_KEY = "senaasdcow82r8fushf03r8hfray03hfacn209uej0jd0mc0qdu03opapq0r"

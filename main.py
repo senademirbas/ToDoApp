@@ -1,13 +1,17 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from models import Base, Todo
-from database import engine
-from routers.auth import router as auth_router
-from routers.todo import router as todo_router
+from .models import Base, Todo
+from .database import engine
+from .routers.auth import router as auth_router
+from .routers.todo import router as todo_router
 from starlette import status
+import os
 
 app = FastAPI()
+
+script_dir = os.path.dirname(__file__)
+st_abs_file_path = os.path.join(script_dir, "static/")
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
